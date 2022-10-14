@@ -24,8 +24,10 @@ namespace roomReservation.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(UserDto request)
         {
+            //Create password hash 
             CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
+            //Create new user with password Hash and password Salt
             User user = new User
             {
                 Email = request.Email,
@@ -33,6 +35,7 @@ namespace roomReservation.Controllers
                 PasswordSalt = passwordSalt,
             };
 
+            //Add user to database
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return Ok(user);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace roomReservation.Controllers
@@ -22,7 +23,7 @@ namespace roomReservation.Controllers
             return Ok(rooms);
         }
 
-        [HttpGet("range")]
+        [HttpGet("range"), Authorize]
         public async Task<ActionResult<List<Room>>> GetFreeRoomsOnRange(DateTime StartDate, DateTime EndDate)
         {
             //Check date input is valid
