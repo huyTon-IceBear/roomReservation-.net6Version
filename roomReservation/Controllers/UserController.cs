@@ -14,27 +14,21 @@ namespace roomReservation.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<User>>> Get()
-        {
-            return Ok(await _context.Users.ToListAsync());
-        }
-
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<User>>> Get(int id)
+        public async Task<ActionResult<User>> Get(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.Include(c => c.Reservations).FirstOrDefaultAsync(c => c.Id == id);
             if (user == null) return BadRequest("User not found");
             return Ok(user);
         }
 
         [HttpPost]
-        public async Task<ActionResult<List<User>>> AddUser(User user)
+        public async Task<ActionResult<User>> AddUser(User user)
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok(await _context.Users.ToListAsync());
+            return Ok(user);
         }
 
         [HttpPut]
@@ -43,17 +37,16 @@ namespace roomReservation.Controllers
             var user = await _context.Users.FindAsync(request.Id);
             if (user == null) return BadRequest("User not found");
 
-            user.Name = request.Name;
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
+            if (request.Name != "") user.Name = request.Name;
+            if (request.FirstName != "") user.FirstName = request.FirstName;
+            if (request.LastName != "") user.LastName = request.LastName;
 
             await _context.SaveChangesAsync();
-
             return Ok(await _context.Users.ToListAsync());
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<User>>> Delete(int id)
+        public async Task<ActionResult<User>> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null) return BadRequest("User not found");
@@ -61,7 +54,7 @@ namespace roomReservation.Controllers
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return Ok(await _context.Users.ToListAsync());
+            return Ok(user);
         }
     }
 }
