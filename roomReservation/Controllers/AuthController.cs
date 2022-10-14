@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using roomReservation.Service.UserService;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -14,11 +16,13 @@ namespace roomReservation.Controllers
     {
         private readonly DataContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IUserService _userService;
 
-        public AuthController(DataContext context, IConfiguration configuration)
+        public AuthController(DataContext context, IConfiguration configuration, IUserService userService)
         {
             _context = context;
             _configuration = configuration;
+            _userService = userService;
         }
 
         [HttpPost("register")]
@@ -53,11 +57,12 @@ namespace roomReservation.Controllers
             //Verify user password
             if(!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             {
-                return BadRequest("User does not exist");
+                return BadRequest("Wrong password");
             }
 
             //Create and return token
-            return Ok(CreateToken(user));
+            string token = CreateToken(user);
+            return Ok(token);
         }
 
         private string CreateToken(User user)
@@ -69,17 +74,17 @@ namespace roomReservation.Controllers
             };
 
             //Create security key
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
+                           _configuration.GetSection("AppSettings:Token").Value));
 
             //Signing credentials
-            var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             //Create jwt token
             var token = new JwtSecurityToken(
-               claims: claims,
-               expires: DateTime.Now.AddMinutes(30),
-               signingCredentials: cred
-               );
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds);
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 

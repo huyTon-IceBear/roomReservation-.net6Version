@@ -1,25 +1,30 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using roomReservation.Service.UserService;
 
 namespace roomReservation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+
     public class UserController : ControllerBase
     {
         private readonly DataContext _context;
+        private readonly IUserService _userService;
 
-        public UserController(DataContext context)
+        public UserController(DataContext context, IUserService userService)
         {
             _context = context;
+            _userService = userService;
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(int id)
+        [HttpGet]
+        public async Task<ActionResult<User>> GetPersonalInfor()
         {
-            var user = await _context.Users.Include(c => c.Reservations).FirstOrDefaultAsync(c => c.Id == id);
+            var userEmail = _userService.GetMyName();
+            var user = await _context.Users.Include(c => c.Reservations).FirstOrDefaultAsync(c => c.Email == userEmail);
             if (user == null) return BadRequest("User not found");
             return Ok(user);
         }
