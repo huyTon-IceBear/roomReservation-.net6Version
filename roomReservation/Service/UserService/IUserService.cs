@@ -1,7 +1,9 @@
-﻿namespace roomReservation.Service.UserService
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace roomReservation.Service.UserService
 {
     public interface IUserService
     {
-        string GetMyName();
+        Task<ActionResult<User>> GetUser();
     }
 }

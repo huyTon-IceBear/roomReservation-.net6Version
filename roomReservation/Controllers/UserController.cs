@@ -23,37 +23,63 @@ namespace roomReservation.Controllers
         [HttpGet]
         public async Task<ActionResult<User>> GetPersonalInfor()
         {
-            var userEmail = _userService.GetMyName();
-            var user = await _context.Users.Include(c => c.Reservations).FirstOrDefaultAsync(c => c.Email == userEmail);
-            if (user == null) return BadRequest("User not found");
-            return Ok(user);
+            //Get user data from JWT token
+            var user = await _userService.GetUser();
+
+            //Modified data of user
+            var result = new
+            {
+                user.Value!.Email,
+                user.Value!.FirstName,
+                user.Value!.LastName,
+                reservation = user.Value.Reservations!.Select((r) =>
+                {
+                    return new
+                    {
+                        r.Id,
+                        r.BookingDate,
+                        r.Description,
+                        r.RoomId,
+                    };
+                })
+            };
+            return Ok(result);
         }
 
 
         [HttpPut]
-        public async Task<ActionResult<List<User>>> UpdateUser(User request)
+        public async Task<ActionResult<User>> UpdateUser(UpdateUserDto request)
         {
-            var user = await _context.Users.FindAsync(request.Id);
-            if (user == null) return BadRequest("User not found");
+            //Get user data from JWT token
+            var user = await _userService.GetUser();
 
-            if (request.Email != "") user.Email = request.Email;
-            if (request.FirstName != "") user.FirstName = request.FirstName;
-            if (request.LastName != "") user.LastName = request.LastName;
+            //Update user informaation base on request input
+            if (request.Email != "string") user.Value!.Email = request.Email;
+            if (request.FirstName != "string") user.Value!.FirstName = request.FirstName;
+            if (request.LastName != "string") user.Value!.LastName = request.LastName;
 
             await _context.SaveChangesAsync();
-            return Ok(await _context.Users.ToListAsync());
+
+            var result = new
+            {
+                user.Value!.Email,
+                user.Value!.FirstName,
+                user.Value!.LastName,
+            };
+
+            return Ok(result);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<User>> DeleteUser(int id)
+        [HttpDelete]
+        public async Task<ActionResult<string>> DeleteUser()
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return BadRequest("User not found");
+            //Get user data from JWT token
+            var user = await _userService.GetUser();
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            //Remove user from the database
+            _context.Users.Remove(user.Value!);
 
-            return Ok(user);
+            return Ok("User " + user.Value!.Email + " is removed");
         }
     }
 }

@@ -17,7 +17,6 @@ namespace roomReservation.Controllers
         private readonly DataContext _context;
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
-
         public AuthController(DataContext context, IConfiguration configuration, IUserService userService)
         {
             _context = context;
@@ -28,6 +27,12 @@ namespace roomReservation.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(UserDto request)
         {
+            //Check if any user have the same email
+            var findDup = await _context.Users.FirstOrDefaultAsync(r => r.Email == request.Email);
+
+            //If there is a dupplicate result, return error
+            if (findDup != null) return BadRequest("You can not use this email to create account");
+
             //Create password hash 
             CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 

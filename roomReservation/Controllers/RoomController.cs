@@ -31,9 +31,13 @@ namespace roomReservation.Controllers
                 return NotFound("End date must after the start date");
 
             //Get all the busy roomid from filter the reservation & start date + end date
-            var busyRoomIds = await _context.Reservations.Where(r => r.BookingDate.Date >= StartDate.Date && r.BookingDate.Date <= EndDate.Date).Select(r => r.RoomId).Distinct().ToListAsync();
+            var busyRoomIds = await _context.Reservations
+                .Where(r => r.BookingDate.Date >= StartDate.Date && r.BookingDate.Date <= EndDate.Date)
+                .Select(r => r.RoomId)
+                .Distinct()
+                .ToListAsync();
             
-            //Get room
+            //Get rooms with status
             var rooms = await _context.Rooms
                 .Include(c => c.Reservations)
                 .Select(r => new {
