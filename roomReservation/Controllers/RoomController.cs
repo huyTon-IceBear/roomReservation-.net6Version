@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace roomReservation.Controllers
@@ -22,7 +23,7 @@ namespace roomReservation.Controllers
             return Ok(rooms);
         }
 
-        [HttpGet("range")]
+        [HttpGet("range"), Authorize]
         public async Task<ActionResult<List<Room>>> GetFreeRoomsOnRange(DateTime StartDate, DateTime EndDate)
         {
             //Check date input is valid
@@ -30,9 +31,13 @@ namespace roomReservation.Controllers
                 return NotFound("End date must after the start date");
 
             //Get all the busy roomid from filter the reservation & start date + end date
-            var busyRoomIds = await _context.Reservations.Where(r => r.BookingDate.Date >= StartDate.Date && r.BookingDate.Date <= EndDate.Date).Select(r => r.RoomId).Distinct().ToListAsync();
+            var busyRoomIds = await _context.Reservations
+                .Where(r => r.BookingDate.Date >= StartDate.Date && r.BookingDate.Date <= EndDate.Date)
+                .Select(r => r.RoomId)
+                .Distinct()
+                .ToListAsync();
             
-            //Get room
+            //Get rooms with status
             var rooms = await _context.Rooms
                 .Include(c => c.Reservations)
                 .Select(r => new {
